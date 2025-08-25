@@ -8,17 +8,21 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic_core.core_schema import model_field
 from langchain.tools import tool
 from langchain.agents import create_openai_tools_agent, AgentExecutor
+from todoist_api_python.api import TodoistAPI
 
 load_dotenv()
 
 todoist_api_key = os.getenv("TODOIST_API_KEY")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
+todoist = TodoistAPI(todoist_api_key)
+
 @tool
-def add_task(task):
+def add_task(task, desc=None):
     """Add a new task to the user's task list. Use this when the user wants to add or create task"""
-    print(task)
-    print("Task added")
+    todoist.add_task(content=task,
+                     description=desc)
+
 
 tools = [add_task]
 
@@ -29,7 +33,7 @@ llm = ChatGoogleGenerativeAI(
 )
 
 system_prompt = "You are a helpful assistant. You will help the user add tasks."
-user_input = "add task to get a new tire"
+user_input = "add task to prepare for the party described as get together of my family members in the house"
 
 prompt = ChatPromptTemplate([
     ("system", system_prompt),
@@ -43,5 +47,6 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
 
 # response = chain.invoke({"input": user_input})
 response = agent_executor.invoke({"input": user_input})
+
 
 print(response['output'])
